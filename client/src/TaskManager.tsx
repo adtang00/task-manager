@@ -9,7 +9,11 @@ interface Task {
   priority: string;
 }
 
-function TaskManager() {
+interface myProps {
+    setIsAuth: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+function TaskManager(props: myProps) {
   const [tableData, setTableData] = useState<Task[]>([]);
   const [taskPopup, setTaskPopup] = useState(false);
 
@@ -20,12 +24,14 @@ function TaskManager() {
 
   //Refresh when tasks change
   useEffect(() => {
-    console.log('tableData changed:', tableData);
+    //console.log('tableData changed:', tableData);
   }, [tableData]);  
 
   const fetchFromSupabase = () => {
-    fetch('http://localhost:5000/task/get')
-      .then((res) => res.json())
+    fetch('http://localhost:5000/task/get', {
+      method: "GET",
+      credentials: "include"
+    }).then((res) => res.json())
       .then((data) => {
         setTableData([...data]);
       })
@@ -38,6 +44,7 @@ function TaskManager() {
     console.log(taskData)
     fetch('http://localhost:5000/task/post', {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
@@ -54,6 +61,7 @@ function TaskManager() {
     console.log(id)
     fetch('http://localhost:5000/task/delete', {
       method: "DELETE",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
@@ -70,7 +78,10 @@ function TaskManager() {
       headers: {
         "Content-Type": "application/json",
       }
-    })
+    }).then((res)=> {
+      if(res.ok){
+        props.setIsAuth(false)
+      }})
   }
 
   return (

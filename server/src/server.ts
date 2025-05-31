@@ -23,10 +23,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 
-
+//Check for active user
 app.get('/auth/user', async (req: Request, res: Response): Promise<any> => {
   const token = req.cookies.token
-  console.log('Cookies:', req.cookies);
+  //console.log('Cookies:', req.cookies);
   if(!token){
     return res.status(401).json({ message: 'No token provided' });
   }
@@ -42,6 +42,7 @@ app.get('/auth/user', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
+//Signing in
 app.post('/auth/signin', async(req: Request, res: Response): Promise<any> => {
   const {email, password} = req.body
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -67,47 +68,106 @@ app.post('/auth/signin', async(req: Request, res: Response): Promise<any> => {
   }
 });
 
-//Quering from supabase
-app.get('/task/get', async (req: Request, res: Response) => {
-  const {data, error} = await supabase.from('Tasks').select('*');
+//Signing Out
+app.post('/auth/logout', async(req: Request, res:Response): Promise<any> => {
+  const { error } = await supabase.auth.signOut()
   if (error) {
-    console.error('Error fetching data in GET:', error.message);
-    res.sendStatus(500);
+    return res.status(401).json({message: "Sign-out failed"})
   }
-  else {
-    res.json(data)
+  else{
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: false, // set to true in production with HTTPS
+      //sameSite: 'Strict',
+    });
+    return res.status(200).json({message: "Sign-out successful"})
   }
+});
+
+//Quering from supabase
+app.get('/task/get', async (req: Request, res: Response): Promise<any> => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized: No token found' });
+  }
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+
+  if (userError || !userData?.user) {
+    return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+  }
+  else{
+    const userId = userData.user.id;
+
+    const {data, error} = await supabase.from('Tasks').select('*').eq('user_id', userId);
+    if (error) {
+      console.error('Error fetching data in GET:', error.message);
+      return res.sendStatus(500);
+    }
+    else {
+      return res.json(data)
+  }}
 });
 
 //Inserting into supabase
-app.post('/task/post', async (req: Request, res: Response) => {
-  const {data, error} = await supabase
-    .from('Tasks')
-    .insert({task: req.body['task'], description: req.body['description'], priority: req.body['priority'],})
-    .select(); 
-  if (error) {
-    console.error('Error fetching data in POST:', error.message);
-    res.sendStatus(500); 
+app.post('/task/post', async (req: Request, res: Response): Promise<any> => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized: No token found' });
   }
-  else {
-    res.sendStatus(201); 
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+
+  if (userError || !userData?.user) {
+    return res.status(401).json({ message: 'Unauthorized: Invalid token' });
   }
+  else{
+    const userId = userData.user.id;
+    const {data, error} = await supabase
+      .from('Tasks')
+      .insert({task: req.body['task'], description: req.body['description'], priority: req.body['priority'], user_id: userId})
+      .select(); 
+    if (error) {
+      console.error('Error fetching data in POST:', error.message);
+      return res.sendStatus(500); 
+    }
+    else {
+      return res.sendStatus(201); 
+    }
+  } 
 });
 
 //Delete from supabase
-app.delete('/task/delete', async (req: Request, res: Response) => {
-  try {
-    const id = Number(req.body?.id);
-    console.log('Parsed ID:', id, typeof id);
-    const {error} = await supabase
-      .from('Tasks')
-      .delete()
-      .eq('id', id)
-    res.sendStatus(201);
+app.delete('/task/delete', async (req: Request, res: Response): Promise<any> => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized: No token found' });
   }
-  catch (err) {
-    console.error('Error deleting data:', err);
-    res.sendStatus(500);
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+
+  if (userError || !userData?.user) {
+    return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+  }
+  else{
+    const userId = userData.user.id;
+    try {
+      const id = Number(req.body?.id);
+      console.log('Parsed ID:', id, typeof id);
+      const {error} = await supabase
+        .from('Tasks')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
+      res.sendStatus(201);
+    }
+    catch (err) {
+      console.error('Error deleting data:', err);
+      return res.sendStatus(500);
+    }
   }
 });
 

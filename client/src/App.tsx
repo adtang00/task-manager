@@ -26,7 +26,7 @@ function App() {
 
     return (
         <div>
-            {isAuth ? (<TaskManager></TaskManager>):(<Signin setIsAuth={setIsAuth}></Signin>)}
+            {isAuth ? (<TaskManager setIsAuth={setIsAuth}></TaskManager>):(<Signin setIsAuth={setIsAuth}></Signin>)}
         </div>
     )
 }
