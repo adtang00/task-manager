@@ -37,33 +37,44 @@ function Signin(props : myProps) {
         }
     }
 
+return (
+  <div className="p-4 max-w-md mx-auto mt-10">
+    <h2 className="text-2xl font-bold mb-4">Sign In</h2>
 
-    return (
-        <div className="p-4 max-w-md mx-auto mt-10">
-        <h2 className="text-2xl font-bold mb-4">Task Manager</h2>
-        <input
-            className="border p-2 w-full mb-2"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-            className="border p-2 w-full mb-4"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-        />
-        <button
-            onClick={handleSignin}
-            className="bg-blue-600 text-black px-4 py-2 rounded w-full"
-        >
-            Sign In
-        </button>
-        {errorMsg && <p className="text-red-600 mt-2">{errorMsg}</p>}
-        </div>
-    )
+    <input
+      className="border p-2 w-full mb-2"
+      type="email"
+      placeholder="Email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+    />
+
+    <input
+      className="border p-2 w-full mb-4"
+      type="password"
+      placeholder="Password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+    />
+
+    <button
+      onClick={handleSignin}
+      className="!bg-blue-300 text-black px-4 py-2 rounded w-full"
+    >
+      Enter
+    </button>
+
+    {errorMsg && <p className="text-red-600 mt-2">{errorMsg}</p>}
+
+    {/* Sign up link */}
+    <p className="mt-4 text-center text-sm text-gray-600">
+      Don’t have an account?{" "}
+      <a href="/signup" className="text-blue-600 hover:underline font-medium">
+        Sign up
+      </a>
+    </p>
+  </div>
+);
 }
 
 export default Signin;
