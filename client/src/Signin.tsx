@@ -1,4 +1,5 @@
 import {useState} from 'react'
+import { Link } from 'react-router-dom';
 import './App.css'
 
 interface myProps {
@@ -68,10 +69,10 @@ return (
 
     {/* Sign up link */}
     <p className="mt-4 text-center text-sm text-gray-600">
-      Don’t have an account?{" "}
-      <a href="/signup" className="text-blue-600 hover:underline font-medium">
-        Sign up
-      </a>
+        Don’t have an account?{" "}
+        <Link to="/signup" className="text-blue-600 hover:underline font-medium">
+            Sign up
+        </Link>
     </p>
   </div>
 );
