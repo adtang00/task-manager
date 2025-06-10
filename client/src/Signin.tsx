@@ -1,5 +1,6 @@
 import {useState} from 'react'
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './App.css'
 
 interface myProps {
@@ -7,6 +8,7 @@ interface myProps {
 }
 
 function Signin(props : myProps) {
+    const navigate = useNavigate();
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [errorMsg, setErrorMsg] = useState('');
@@ -25,12 +27,11 @@ function Signin(props : myProps) {
             if (!res.ok) {
                 const data = await res.json()
                 setErrorMsg(data.message)
-                console.log('handle signin failed')
                 return
             }
             else {
-                console.log('handle signin success')
                 props.setIsAuth(true)
+                navigate('/tasks')
             }
         } catch (err) {
             props.setIsAuth(false)

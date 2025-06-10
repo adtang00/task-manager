@@ -1,14 +1,16 @@
 import {useState} from 'react'
+import { useNavigate } from 'react-router-dom';
 import './App.css'
 
 function Signin () {
+    const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
 
-    const handleSignup = () => {
+    const handleSignup = async() => {
         try {
-            fetch("/auth/signup", {
+            const res = await fetch("http://localhost:5000/auth/signup", {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -16,6 +18,17 @@ function Signin () {
                 },
                 body: JSON.stringify({email, password})
             })
+
+            if (!res.ok) {
+                const data = await res.json();
+                setErrorMsg(data.message);
+                console.log('handle signup failed');
+                return
+            }
+            else {
+                console.log('handle signup success');
+                navigate('/signin');
+            }
         }
         catch (err) {
             setErrorMsg('Network Error')

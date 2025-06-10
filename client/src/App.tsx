@@ -7,24 +7,28 @@ import Signup from './Signup.tsx';
 
 function App() {
     const [isAuth, setIsAuth] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true); 
 
     //Check if user is logged in on page refresh
-    useEffect(() => { 
+    useEffect(() => {
         fetch('http://localhost:5000/auth/user', {
-            method: "GET",
-            credentials: 'include',
-            headers: {
-                "Content-Type": "application/json",
-            }
+        method: "GET",
+        credentials: 'include',
+        headers: {
+            "Content-Type": "application/json",
+        }
         }).then((res) => {
-            if(res.ok){
-                setIsAuth(true)
-            }
-            else{
-                setIsAuth(false)
-            }
-        })
-    }, [])
+        setIsAuth(res.ok);
+        setLoading(false); // Done checking auth
+        }).catch(() => {
+        setIsAuth(false);
+        setLoading(false);
+        });
+  }, []);
+
+    if (loading) {
+        return <div className="text-center p-4">Loading...</div>; 
+    }
 
     return (
         <Router>
@@ -42,7 +46,7 @@ function App() {
                     }
                 />
                 {/* Default route */}
-                <Route path="*" element={<Navigate to={isAuth ? "/TaskManager" : "/Signin"} />} />
+                <Route path="*" element={<Navigate to={isAuth ? "/tasks" : "/Signin"} replace />} />
             </Routes>
         </Router>
     )

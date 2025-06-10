@@ -15,7 +15,9 @@ interface myProps {
 
 function TaskManager(props: myProps) {
   const [tableData, setTableData] = useState<Task[]>([]);
-  const [taskPopup, setTaskPopup] = useState(false);
+  const [formVisible, setFormVisible] = useState(false);
+  const [taskBeingEdited, setTaskBeingEdited] = useState<Task | null>(null);
+
 
   //Page Load inital sync from Supabase
   useEffect(() => {
@@ -23,9 +25,7 @@ function TaskManager(props: myProps) {
   }, [])
 
   //Refresh when tasks change
-  useEffect(() => {
-    //console.log('tableData changed:', tableData);
-  }, [tableData]);  
+  useEffect(() => {}, [tableData]);  
 
   const fetchFromSupabase = () => {
     fetch('http://localhost:5000/task/get', {
@@ -40,25 +40,38 @@ function TaskManager(props: myProps) {
       });
   }
 
+  //receives form data and calls backend
   const handleSubmit = async (taskData: Task) => {
-    console.log(taskData)
-    fetch('http://localhost:5000/task/post', {
-      method: "POST",
+    const isEditing = !!taskBeingEdited?.id;
+
+    const url = isEditing
+      ? 'http://localhost:5000/task/update'  
+      : 'http://localhost:5000/task/add';
+
+    const method = isEditing ? "PUT" : "POST";
+
+    const body = isEditing
+      ? JSON.stringify({ ...taskData, id: taskBeingEdited!.id })  // include id for update
+      : JSON.stringify(taskData);
+
+    fetch(url, {
+      method,
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(taskData)
-    }).then(() => { 
-        fetchFromSupabase();    
+      body,
+    })
+      .then(() => {
+        fetchFromSupabase();
+        setTaskBeingEdited(null); // reset after submit
       })
-    .catch((err) => {
-      console.error('Failed to fetch from table:', err);
-    });
-  }
+      .catch((err) => {
+        console.error('Failed to submit task:', err);
+      });
+};
 
   const handleDelete = async (id : number) => {
-    console.log(id)
     fetch('http://localhost:5000/task/delete', {
       method: "DELETE",
       credentials: "include",
@@ -71,6 +84,13 @@ function TaskManager(props: myProps) {
       console.error('Failed to delete from table:', err);
     });   
   }
+
+  const handleEdit = async(taskData: Task) => {
+    //console.log(taskData);
+    setTaskBeingEdited(taskData);
+    setFormVisible(true);
+  }
+  
 
   const handleLogOut = async() => {
     fetch('http://localhost:5000/auth/logout', {
@@ -92,7 +112,7 @@ return (
       <div className="space-x-3">
         <button
           className="ml-5  !bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-full transition duration-200"
-          onClick={() => setTaskPopup(true)}
+          onClick={() => setFormVisible(true)}
         >
           + Add Task
         </button>
@@ -121,20 +141,28 @@ return (
               <span
                 className={`text-xs font-semibold px-2 py-1 rounded-full ${
                   data.priority === 'High'
-                    ? 'bg-red-100 text-red-600'
+                    ? '!bg-red-300 text-red-600'
                     : data.priority === 'Medium'
-                    ? 'bg-yellow-100 text-yellow-600'
-                    : 'bg-green-100 text-green-600'
+                    ? '!bg-yellow-300 text-yellow-600'
+                    : '!bg-green-300 text-green-600'
                 }`}
               >
                 {data.priority}
               </span>
-              <button
-                onClick={() => handleDelete(parseInt(data.id!))}
-                className="text-red-500 hover:text-red-700 text-lg font-bold"
-              >
-                ×
-              </button>
+              <div className="flex gap-2">
+            <button
+              onClick={() => handleEdit(data)}
+              className="text-blue-500 hover:text-blue-700 text-sm font-semibold"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => handleDelete(parseInt(data.id!))}
+              className="text-red-500 hover:text-red-700 text-lg font-bold"
+            >
+              ×
+            </button>
+          </div>
             </div>
           </div>
         ))
@@ -144,7 +172,16 @@ return (
     </div>
 
     {/* Add Task Modal */}
-    <AddTaskPopup trigger={taskPopup} setTrigger={setTaskPopup} onSubmit={handleSubmit} />
+    <AddTaskPopup
+      trigger={formVisible}
+      setTrigger={(val) => {
+        setFormVisible(val);
+        if (!val) setTaskBeingEdited(null);
+      }}
+      onSubmit={handleSubmit}
+      existingTask={taskBeingEdited}  // 👈 THIS is how taskData gets in
+    />
+
   </div>
 );
 }

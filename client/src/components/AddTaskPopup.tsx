@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './components.css'
 //import e from 'express';
 
@@ -10,20 +10,37 @@ interface Task {
 }
 
 type myProps = {
-    //children: React.ReactNode;
     trigger: boolean;
     setTrigger: React.Dispatch<React.SetStateAction<boolean>>
     onSubmit: (task: Task) => void;
+    existingTask?: Task | null;
 };
 
 function AddTaskPopup(props: myProps){
-    if (!props.trigger) return null;
-    const [task, setTask] = useState({
-        task: '',
-        description: '',
-        priority: '',
-      });
+    //if (!props.trigger) return null;
+    const [task, setTask] = useState<Task>({
+      task: '',
+      description: '',
+      priority: '',
+    });
 
+    useEffect(() => {
+      if (props.existingTask) {
+        setTask({
+          task: props.existingTask.task,
+          description: props.existingTask.description,
+          priority: props.existingTask.priority,
+        });
+      } else {
+        setTask({
+          task: '',
+          description: '',
+          priority: '',
+        });
+      }
+  }, [props.existingTask]);
+
+    //Passes form info back to TaskManager
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       props.onSubmit(task);
@@ -39,7 +56,9 @@ function AddTaskPopup(props: myProps){
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+        <div  className={`fixed inset-0 bg-black/80 z-50 flex items-center justify-center ${
+    props.trigger ? '' : 'hidden'
+  }`}>
           <div className="bg-white p-6 rounded shadow-lg w-96">
           <button
         onClick={() => props.setTrigger(false)}
@@ -95,9 +114,9 @@ function AddTaskPopup(props: myProps){
                   className="border border-gray-300 p-2 rounded w-full"
                 >
                   <option value="">Select priority</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
                 </select>
               </div>
       

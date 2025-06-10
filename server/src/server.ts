@@ -16,7 +16,7 @@ app.use(cookieParser())
 
 const corsOptions = {
   origin: 'http://localhost:5173',  
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS', 'PUT'],
   allowedHeaders: ['Content-Type'],
   credentials: true,  
 };
@@ -84,6 +84,18 @@ app.post('/auth/logout', async(req: Request, res:Response): Promise<any> => {
   }
 });
 
+//Signing up
+app.post('/auth/signup', async(req: Request, res: Response): Promise<any> => {
+  const {email, password} = req.body
+  const {data, error} = await supabase.auth.signUp({email: email, password: password})
+  if(error) {
+    return res.status(401).json({message: "Signup failed."})
+  }
+  else {
+    return res.status(200).json({message: "Signup successful."})
+  }
+})
+
 //Quering from supabase
 app.get('/task/get', async (req: Request, res: Response): Promise<any> => {
   const token = req.cookies.token;
@@ -111,7 +123,7 @@ app.get('/task/get', async (req: Request, res: Response): Promise<any> => {
 });
 
 //Inserting into supabase
-app.post('/task/post', async (req: Request, res: Response): Promise<any> => {
+app.post('/task/add', async (req: Request, res: Response): Promise<any> => {
   const token = req.cookies.token;
 
   if (!token) {
@@ -169,6 +181,36 @@ app.delete('/task/delete', async (req: Request, res: Response): Promise<any> => 
       return res.sendStatus(500);
     }
   }
+});
+
+//Updating into supabase
+app.put('/task/update', async (req: Request, res: Response): Promise<any> => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized: No token found' });
+  }
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+
+  if (userError || !userData?.user) {
+    return res.status(401).json({ message: 'Unauthorized: Invalid token' });
+  }
+  else{
+    const userId = userData.user.id;
+    const {data, error} = await supabase
+      .from('Tasks')
+      .update({task: req.body['task'], description: req.body['description'], priority: req.body['priority'], user_id: userId})
+      .eq('id', req.body['id'])
+      .select(); 
+    if (error) {
+      console.error('Error updating data:', error.message);
+      return res.sendStatus(500); 
+    }
+    else {
+      return res.sendStatus(201); 
+    }
+  } 
 });
 
 //Starting the server
